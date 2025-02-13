@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
-	"github.com/chromedp/cdproto/dom"
 	"github.com/chromedp/chromedp"
 	"strings"
 	"time"
@@ -14,11 +13,10 @@ func ScrapeZara() {
 	fmt.Println("Start Zara Scraper")
 
 	ScrapeProductsPage("https://www.zara.com/uk/en/man-all-products-l7465.html?v1=2443335")
-
 }
 
-func ScrapeProductsPage(url string) {
-	fmt.Printf("Scraping Zara products page %s", url)
+func ScrapeProductsPage(baseUrl string) {
+	fmt.Printf("Scraping Zara products page %s", baseUrl)
 
 	opts := append(chromedp.DefaultExecAllocatorOptions[:],
 		chromedp.UserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "+
@@ -29,42 +27,64 @@ func ScrapeProductsPage(url string) {
 	allocCtx, cancel := chromedp.NewExecAllocator(context.Background(), opts...)
 	defer cancel()
 
-	ctx, cancel := chromedp.NewContext(allocCtx)
-	defer cancel()
+	browserCtx, browserCancel := chromedp.NewContext(allocCtx)
+	defer browserCancel()
 
-	ctx, cancel = context.WithTimeout(ctx, 20*time.Second)
+	page := 1
+
+	for {
+		tabCtx, tabCancel := chromedp.NewContext(browserCtx)
+		hrefs := GetProductsFromPage(tabCtx, baseUrl, page)
+		tabCancel()
+
+		if len(hrefs) == 0 {
+			fmt.Printf("No more products on page %d", page)
+			break
+		}
+
+		fmt.Println("page scraped")
+		page++
+
+		fmt.Printf("Next page %d", page)
+	}
+
+}
+
+func GetProductsFromPage(browserCtx context.Context, baseURL string, pageNo int) []string {
+	url := fmt.Sprintf("%s&page=%d", baseURL, pageNo)
+	fmt.Printf("\nScraping Zara page %d: %s\n", pageNo, url)
+
+	ctx, cancel := context.WithTimeout(browserCtx, 20*time.Second)
 	defer cancel()
 
 	var html string
 
 	err := chromedp.Run(ctx,
 		chromedp.Navigate(url),
-		chromedp.Sleep(2000*time.Millisecond),
-		chromedp.ActionFunc(func(ctx context.Context) error {
-			rootNode, err := dom.GetDocument().Do(ctx)
-
-			if err != nil {
-				return err
-			}
-
-			html, err = dom.GetOuterHTML().WithNodeID(rootNode.NodeID).Do(ctx)
-
-			return err
-		}),
+		chromedp.WaitReady("body"),
+		chromedp.Sleep(3*time.Second),
+		chromedp.OuterHTML("html", &html),
 	)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("Error navigating page:", err)
+		return nil
 	}
 
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(html))
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("Error parsing HTML:", err)
+		return nil
 	}
+
+	var productHrefs []string
 
 	doc.Find("li.product-grid-product a.product-link").Each(func(i int, s *goquery.Selection) {
 		href, exists := s.Attr("href")
 		if exists {
 			fmt.Printf("Product %d href: %s\n", i, href)
+			productHrefs = append(productHrefs, href)
 		}
 	})
+
+	return productHrefs
 }
