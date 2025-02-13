@@ -3,8 +3,10 @@
 import (
 	"context"
 	"fmt"
+	"github.com/PuerkitoBio/goquery"
 	"github.com/chromedp/cdproto/dom"
 	"github.com/chromedp/chromedp"
+	"strings"
 	"time"
 )
 
@@ -50,10 +52,19 @@ func ScrapeProductsPage(url string) {
 			return err
 		}),
 	)
-
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	fmt.Println(html)
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(html))
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	doc.Find("li.product-grid-product a.product-link").Each(func(i int, s *goquery.Selection) {
+		href, exists := s.Attr("href")
+		if exists {
+			fmt.Printf("Product %d href: %s\n", i, href)
+		}
+	})
 }
