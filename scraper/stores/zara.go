@@ -1,6 +1,7 @@
 ﻿package stores
 
 import (
+	"KoralSiftV2/helpers"
 	"context"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
@@ -32,6 +33,8 @@ func ScrapeProductsPage(baseUrl string) {
 
 	page := 1
 
+	var allHrefs []string
+
 	for {
 		tabCtx, tabCancel := chromedp.NewContext(browserCtx)
 		hrefs := GetProductsFromPage(tabCtx, baseUrl, page)
@@ -42,10 +45,20 @@ func ScrapeProductsPage(baseUrl string) {
 			break
 		}
 
-		fmt.Println("page scraped")
+		fmt.Println("Found", len(hrefs), "products on page", page)
+
 		page++
+		allHrefs = append(allHrefs, hrefs...)
 
 		fmt.Printf("Next page %d", page)
+	}
+
+	hrefsSet := helpers.CreateSet(allHrefs)
+
+	fmt.Println("Total found product hrefs:", len(allHrefs))
+	fmt.Println("Unique product hrefs:", len(hrefsSet))
+	for href := range hrefsSet {
+		fmt.Println(href)
 	}
 
 }
@@ -81,7 +94,6 @@ func GetProductsFromPage(browserCtx context.Context, baseURL string, pageNo int)
 	doc.Find("li.product-grid-product a.product-link").Each(func(i int, s *goquery.Selection) {
 		href, exists := s.Attr("href")
 		if exists {
-			fmt.Printf("Product %d href: %s\n", i, href)
 			productHrefs = append(productHrefs, href)
 		}
 	})
