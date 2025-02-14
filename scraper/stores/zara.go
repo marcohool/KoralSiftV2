@@ -1,6 +1,7 @@
 ﻿package stores
 
 import (
+	"KoralSiftV2/browser"
 	"KoralSiftV2/helpers"
 	"context"
 	"fmt"
@@ -13,39 +14,18 @@ import (
 func ScrapeZara() {
 	fmt.Println("Start Zara Scraper")
 
-	ukMenHrefs := ScrapeAllProductsPage("https://www.zara.com/uk/en/man-all-products-l7465.html?v1=2443335")
-}
+	browserCtx, cancel := browser.NewChromeManager()
+	defer cancel()
 
-func ScrapeProductPages(hrefs []string) {
-	fmt.Println("Scraping", len(hrefs), "Zara products")
+	ukMenHrefs := ScrapeAllProductsPage(browserCtx, "https://www.zara.com/uk/en/man-all-products-l7465.html?v1=2443335")
 
-	for _, href := range hrefs {
-		ScrapeProductPage(href)
+	for _, href := range ukMenHrefs {
+		fmt.Println(href)
 	}
 }
 
-func ScrapeProductPage(href string) {
-	opts := append(chromedp.DefaultExecAllocatorOptions[:],
-		chromedp.UserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "+
-			"AppleWebKit/537.36 (KHTML, like Gecko) "+
-			"Chrome/115.0.0.0 Safari/537.36"),
-	)
-}
-
-func ScrapeAllProductsPage(baseUrl string) []string {
+func ScrapeAllProductsPage(browserCtx context.Context, baseUrl string) []string {
 	fmt.Printf("Scraping Zara products page %s", baseUrl)
-
-	opts := append(chromedp.DefaultExecAllocatorOptions[:],
-		chromedp.UserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "+
-			"AppleWebKit/537.36 (KHTML, like Gecko) "+
-			"Chrome/115.0.0.0 Safari/537.36"),
-	)
-
-	allocCtx, cancel := chromedp.NewExecAllocator(context.Background(), opts...)
-	defer cancel()
-
-	browserCtx, browserCancel := chromedp.NewContext(allocCtx)
-	defer browserCancel()
 
 	page := 1
 
