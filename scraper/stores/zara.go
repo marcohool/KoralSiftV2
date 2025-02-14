@@ -13,10 +13,26 @@ import (
 func ScrapeZara() {
 	fmt.Println("Start Zara Scraper")
 
-	ScrapeProductsPage("https://www.zara.com/uk/en/man-all-products-l7465.html?v1=2443335")
+	ukMenHrefs := ScrapeAllProductsPage("https://www.zara.com/uk/en/man-all-products-l7465.html?v1=2443335")
 }
 
-func ScrapeProductsPage(baseUrl string) {
+func ScrapeProductPages(hrefs []string) {
+	fmt.Println("Scraping", len(hrefs), "Zara products")
+
+	for _, href := range hrefs {
+		ScrapeProductPage(href)
+	}
+}
+
+func ScrapeProductPage(href string) {
+	opts := append(chromedp.DefaultExecAllocatorOptions[:],
+		chromedp.UserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "+
+			"AppleWebKit/537.36 (KHTML, like Gecko) "+
+			"Chrome/115.0.0.0 Safari/537.36"),
+	)
+}
+
+func ScrapeAllProductsPage(baseUrl string) []string {
 	fmt.Printf("Scraping Zara products page %s", baseUrl)
 
 	opts := append(chromedp.DefaultExecAllocatorOptions[:],
@@ -57,10 +73,8 @@ func ScrapeProductsPage(baseUrl string) {
 
 	fmt.Println("Total found product hrefs:", len(allHrefs))
 	fmt.Println("Unique product hrefs:", len(hrefsSet))
-	for href := range hrefsSet {
-		fmt.Println(href)
-	}
 
+	return allHrefs
 }
 
 func GetProductsFromPage(browserCtx context.Context, baseURL string, pageNo int) []string {
