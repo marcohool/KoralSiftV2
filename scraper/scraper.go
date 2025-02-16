@@ -2,12 +2,11 @@
 
 import (
 	"KoralSiftV2/scraper/stores"
-	"fmt"
+	"github.com/rs/zerolog/log"
 )
 
 func RunScraper() {
-	fmt.Println("Running scrapers")
+	log.Info().Msg("Running scrapers")
 
-	// ScrapeZara()
 	stores.ScrapeZara()
 }

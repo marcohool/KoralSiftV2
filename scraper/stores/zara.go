@@ -8,12 +8,13 @@ import (
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/chromedp/chromedp"
+	"github.com/rs/zerolog/log"
 	"strings"
 	"time"
 )
 
 func ScrapeZara() {
-	fmt.Println("Start Zara Scraper")
+	log.Info().Msg("Starting Zara Scraper")
 
 	browserCtx, cancel := browser.NewChromeManager()
 	defer cancel()
@@ -21,13 +22,13 @@ func ScrapeZara() {
 	ukMenHrefs := ScrapeAllProductsPage(browserCtx, "https://www.zara.com/uk/en/man-all-products-l7465.html?v1=2443335")
 
 	for _, href := range ukMenHrefs {
-		fmt.Println(href)
+		log.Debug().Str("href", href).Msg("Found product href")
 	}
 
 	ukMensProducts := ScrapeProductHrefs(browserCtx, ukMenHrefs, "Male", "GBP", "UK")
 
 	for _, product := range ukMensProducts {
-		fmt.Printf("%+v\n", product)
+		log.Info().Interface("product", product).Msg("Scraped product")
 	}
 }
 
@@ -36,11 +37,11 @@ func ScrapeProductHrefs(browserCtx context.Context,
 	gender string,
 	currencyCode string,
 	sourceRegion string) []*models.ClothingItem {
-	fmt.Println("Scraping Zara product hrefs")
+	log.Info().Int("count", len(hrefs)).Msg("Scraping Zara product hrefs")
 
 	var allProducts []*models.ClothingItem
 
-	for _, href := range hrefs {
+	for i, href := range hrefs {
 		tabCtx, tabCancel := chromedp.NewContext(browserCtx)
 		clothingItem := ScrapeProduct(tabCtx, href)
 		tabCancel()
@@ -53,6 +54,19 @@ func ScrapeProductHrefs(browserCtx context.Context,
 			clothingItem.SourceRegion = sourceRegion
 
 			allProducts = append(allProducts, clothingItem)
+
+			log.Info().
+				Int("index", i+1).
+				Int("total", len(hrefs)).
+				Str("href", href).
+				Interface("product", clothingItem).
+				Msg("Scraped product successfully")
+		} else {
+			log.Warn().
+				Int("index", i+1).
+				Int("total", len(hrefs)).
+				Str("href", href).
+				Msg("Failed to scrape product")
 		}
 	}
 
@@ -61,17 +75,17 @@ func ScrapeProductHrefs(browserCtx context.Context,
 
 func ScrapeProduct(browserCtx context.Context,
 	url string) *models.ClothingItem {
-	fmt.Println("Scraping Zara product at URL: ", url)
+	log.Info().Str("url", url).Msg("Scraping Zara product")
 
 	err, html := browser.ScrapePage(browserCtx, url)
 	if err != nil {
-		fmt.Println("Error navigating page:", err)
+		log.Error().Err(err).Str("url", url).Msg("Error navigating page")
 		return nil
 	}
 
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(html))
 	if err != nil {
-		fmt.Println("Error parsing HTML:", err)
+		log.Error().Err(err).Str("url", url).Msg("Error parsing HTML")
 		return nil
 	}
 
@@ -81,14 +95,14 @@ func ScrapeProduct(browserCtx context.Context,
 
 	price, err := helpers.ExtractNumericValue(doc.Find(".money-amount__main").Text())
 	if err != nil {
-		fmt.Println("Error extracting price:", err)
+		log.Error().Err(err).Str("url", url).Msg("Error extracting price")
 		return nil
 	}
 	clothingItem.Price = price
 
 	imageURL, imgExists := doc.Find(".product-detail-view__main-image img").Attr("src")
 	if !imgExists {
-		fmt.Println("No image found for product at URL:", url)
+		log.Warn().Str("url", url).Msg("No image found for product")
 	}
 	clothingItem.ImageUrl = imageURL
 
@@ -101,17 +115,17 @@ func ScrapeProduct(browserCtx context.Context,
 				hexColor := helpers.RgbToHex(rgb)
 				hexColors = append(hexColors, hexColor)
 			}
+		} else {
+			log.Warn().Str("url", url).Msg("No colours found for product")
 		}
 	})
 	clothingItem.Colours = hexColors
-
-	fmt.Println("Scraped product: ", clothingItem.Name)
 
 	return clothingItem
 }
 
 func ScrapeAllProductsPage(browserCtx context.Context, baseUrl string) []string {
-	fmt.Printf("Scraping Zara products page %s", baseUrl)
+	log.Info().Str("url", baseUrl).Msg("Scraping Zara products page")
 
 	page := 1
 
@@ -123,44 +137,42 @@ func ScrapeAllProductsPage(browserCtx context.Context, baseUrl string) []string 
 		tabCancel()
 
 		if len(hrefs) == 0 {
-			fmt.Printf("No more products on page %d", page)
+			log.Info().Int("page", page).Msg("No more products found")
 			break
 		}
 
-		fmt.Println("Found", len(hrefs), "products on page", page)
+		log.Info().Int("page", page).Int("count", len(hrefs)).Msg("Found products on page")
 
 		for _, href := range hrefs {
 			hrefsMap[href] = struct{}{}
 		}
 
 		page++
-
-		fmt.Printf("Next page %d", page)
 	}
 
 	uniqueHrefs := helpers.CreateSliceFromMap(hrefsMap)
 
-	fmt.Println("Unique product hrefs:", len(uniqueHrefs))
+	log.Info().Int("unique_count", len(uniqueHrefs)).Msg("Total unique product hrefs found")
 
 	return uniqueHrefs
 }
 
 func GetProductsFromPage(browserCtx context.Context, baseURL string, pageNo int) []string {
 	url := fmt.Sprintf("%s&page=%d", baseURL, pageNo)
-	fmt.Printf("\nScraping Zara page %d: %s\n", pageNo, url)
+	log.Debug().Int("page", pageNo).Str("url", url).Msg("Scraping Zara product page")
 
 	ctx, cancel := context.WithTimeout(browserCtx, 20*time.Second)
 	defer cancel()
 
 	err, html := browser.ScrapePage(ctx, url)
 	if err != nil {
-		fmt.Println("Error navigating page:", err)
+		log.Error().Err(err).Str("url", url).Msg("Error navigating page")
 		return nil
 	}
 
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(html))
 	if err != nil {
-		fmt.Println("Error parsing HTML:", err)
+		log.Error().Err(err).Str("url", url).Msg("Error parsing HTML")
 		return nil
 	}
 
