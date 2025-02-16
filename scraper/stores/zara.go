@@ -3,6 +3,7 @@
 import (
 	"KoralSiftV2/browser"
 	"KoralSiftV2/helpers"
+	"KoralSiftV2/models"
 	"context"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
@@ -22,6 +23,91 @@ func ScrapeZara() {
 	for _, href := range ukMenHrefs {
 		fmt.Println(href)
 	}
+
+	ukMensProducts := ScrapeProductHrefs(browserCtx, ukMenHrefs, "Male", "GBP", "UK")
+
+	for _, product := range ukMensProducts {
+		fmt.Printf("%+v\n", product)
+	}
+}
+
+func ScrapeProductHrefs(browserCtx context.Context,
+	hrefs []string,
+	gender string,
+	currencyCode string,
+	sourceRegion string) []*models.ClothingItem {
+	fmt.Println("Scraping Zara product hrefs")
+
+	var allProducts []*models.ClothingItem
+
+	for _, href := range hrefs {
+		tabCtx, tabCancel := chromedp.NewContext(browserCtx)
+		clothingItem := ScrapeProduct(tabCtx, href)
+		tabCancel()
+
+		if clothingItem != nil {
+			clothingItem.Brand = "Zara"
+			clothingItem.CurrencyCode = currencyCode
+			clothingItem.Gender = gender
+			clothingItem.SourceUrl = href
+			clothingItem.SourceRegion = sourceRegion
+
+			allProducts = append(allProducts, clothingItem)
+		}
+	}
+
+	return allProducts
+}
+
+func ScrapeProduct(browserCtx context.Context,
+	url string) *models.ClothingItem {
+	fmt.Println("Scraping Zara product at URL: ", url)
+
+	err, html := browser.ScrapePage(browserCtx, url)
+	if err != nil {
+		fmt.Println("Error navigating page:", err)
+		return nil
+	}
+
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(html))
+	if err != nil {
+		fmt.Println("Error parsing HTML:", err)
+		return nil
+	}
+
+	clothingItem := &models.ClothingItem{}
+
+	clothingItem.Name = doc.Find(".product-detail-info__header-name").Text()
+
+	price, err := helpers.ExtractNumericValue(doc.Find(".money-amount__main").Text())
+	if err != nil {
+		fmt.Println("Error extracting price:", err)
+		return nil
+	}
+	clothingItem.Price = price
+
+	imageURL, imgExists := doc.Find(".product-detail-view__main-image img").Attr("src")
+	if !imgExists {
+		fmt.Println("No image found for product at URL:", url)
+	}
+	clothingItem.ImageUrl = imageURL
+
+	var hexColors []string
+	doc.Find(".product-detail-color-selector__color-area").Each(func(i int, s *goquery.Selection) {
+		colourStyle, colourExists := s.Attr("style")
+		if colourExists {
+			rgb, rgbExists := helpers.ExtractRGBFromStyle(colourStyle)
+			if rgbExists {
+				hexColor := helpers.RgbToHex(rgb)
+				hexColors = append(hexColors, hexColor)
+			}
+		}
+	})
+	clothingItem.Colours = hexColors
+
+	fmt.Println("Scraped product: ", clothingItem.Name)
+
+	return clothingItem
 }
 
 func ScrapeAllProductsPage(browserCtx context.Context, baseUrl string) []string {
@@ -64,14 +150,7 @@ func GetProductsFromPage(browserCtx context.Context, baseURL string, pageNo int)
 	ctx, cancel := context.WithTimeout(browserCtx, 20*time.Second)
 	defer cancel()
 
-	var html string
-
-	err := chromedp.Run(ctx,
-		chromedp.Navigate(url),
-		chromedp.WaitReady("body"),
-		chromedp.Sleep(3*time.Second),
-		chromedp.OuterHTML("html", &html),
-	)
+	err, html := browser.ScrapePage(ctx, url)
 	if err != nil {
 		fmt.Println("Error navigating page:", err)
 		return nil

@@ -3,6 +3,7 @@
 import (
 	"context"
 	"github.com/chromedp/chromedp"
+	"time"
 )
 
 type ChromeManager struct {
@@ -23,4 +24,17 @@ func NewChromeManager() (context.Context, context.CancelFunc) {
 	browserCtx, browserCancel := chromedp.NewContext(allocCtx)
 
 	return browserCtx, func() { allocCancel(); browserCancel() }
+}
+
+func ScrapePage(browserCtx context.Context, url string) (error, string) {
+	var html string
+
+	err := chromedp.Run(browserCtx,
+		chromedp.Navigate(url),
+		chromedp.WaitReady("body"),
+		chromedp.Sleep(3*time.Second),
+		chromedp.OuterHTML("html", &html),
+	)
+
+	return err, html
 }
