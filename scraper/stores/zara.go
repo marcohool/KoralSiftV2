@@ -37,7 +37,7 @@ func ScrapeProductHrefs(browserCtx context.Context,
 	gender string,
 	currencyCode string,
 	sourceRegion string) []*models.ClothingItem {
-	log.Info().Int("count", len(hrefs)).Msg("Scraping Zara product hrefs")
+	log.Debug().Int("count", len(hrefs)).Msg("Scraping Zara product hrefs")
 	var allProducts []*models.ClothingItem
 
 	for i, href := range hrefs {
@@ -74,7 +74,7 @@ func ScrapeProductHrefs(browserCtx context.Context,
 
 func ScrapeProduct(browserCtx context.Context,
 	url string) *models.ClothingItem {
-	log.Info().Str("url", url).Msg("Scraping Zara product")
+	log.Debug().Str("url", url).Msg("Scraping Zara product")
 
 	err, html := browser.ScrapePage(browserCtx, url)
 	if err != nil {
