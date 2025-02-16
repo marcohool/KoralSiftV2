@@ -38,7 +38,6 @@ func ScrapeProductHrefs(browserCtx context.Context,
 	currencyCode string,
 	sourceRegion string) []*models.ClothingItem {
 	log.Info().Int("count", len(hrefs)).Msg("Scraping Zara product hrefs")
-
 	var allProducts []*models.ClothingItem
 
 	for i, href := range hrefs {
@@ -91,7 +90,11 @@ func ScrapeProduct(browserCtx context.Context,
 
 	clothingItem := &models.ClothingItem{}
 
-	clothingItem.Name = doc.Find(".product-detail-info__header-name").Text()
+	name := doc.Find("h1[class^='product-detail-'][class$='name']").Text()
+	if name == "" {
+		log.Warn().Str("url", url).Msg("No product name found")
+	}
+	clothingItem.Name = name
 
 	price, err := helpers.ExtractNumericValue(doc.Find(".money-amount__main").Text())
 	if err != nil {
@@ -100,7 +103,7 @@ func ScrapeProduct(browserCtx context.Context,
 	}
 	clothingItem.Price = price
 
-	imageURL, imgExists := doc.Find(".product-detail-view__main-image img").Attr("src")
+	imageURL, imgExists := doc.Find("[class^='product-detail-view'] [class$='-image'] img").Attr("src")
 	if !imgExists {
 		log.Warn().Str("url", url).Msg("No image found for product")
 	}
@@ -109,7 +112,7 @@ func ScrapeProduct(browserCtx context.Context,
 	hexColors := make([]string, 0)
 	colorElements := doc.Find(".product-detail-color-selector__color-area")
 	if colorElements.Length() == 0 {
-		log.Warn().Str("product", clothingItem.Name).Str("url", url).Msg("No colour selectors found for product on page")
+		log.Debug().Str("product", clothingItem.Name).Str("url", url).Msg("No colour selectors found for product on page")
 	}
 
 	colorElements.Each(func(i int, s *goquery.Selection) {
@@ -122,7 +125,7 @@ func ScrapeProduct(browserCtx context.Context,
 				log.Warn().Str("style", colourStyle).Str("url", url).Msg("No hex colour found from style for product")
 			}
 		} else {
-			log.Warn().Str("url", url).Msg("No colours found for product")
+			log.Warn().Str("style", colourStyle).Str("url", url).Msg("Style attribute not found for colour element")
 		}
 	})
 	clothingItem.Colours = hexColors
