@@ -115,7 +115,7 @@ func ScrapeAllProductsPage(browserCtx context.Context, baseUrl string) []string 
 
 	page := 1
 
-	var allHrefs []string
+	hrefsMap := make(map[string]struct{})
 
 	for {
 		tabCtx, tabCancel := chromedp.NewContext(browserCtx)
@@ -129,18 +129,20 @@ func ScrapeAllProductsPage(browserCtx context.Context, baseUrl string) []string 
 
 		fmt.Println("Found", len(hrefs), "products on page", page)
 
+		for _, href := range hrefs {
+			hrefsMap[href] = struct{}{}
+		}
+
 		page++
-		allHrefs = append(allHrefs, hrefs...)
 
 		fmt.Printf("Next page %d", page)
 	}
 
-	hrefsSet := helpers.CreateSet(allHrefs)
+	uniqueHrefs := helpers.CreateSliceFromMap(hrefsMap)
 
-	fmt.Println("Total found product hrefs:", len(allHrefs))
-	fmt.Println("Unique product hrefs:", len(hrefsSet))
+	fmt.Println("Unique product hrefs:", len(uniqueHrefs))
 
-	return allHrefs
+	return uniqueHrefs
 }
 
 func GetProductsFromPage(browserCtx context.Context, baseURL string, pageNo int) []string {
