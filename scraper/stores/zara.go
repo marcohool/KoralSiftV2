@@ -106,14 +106,20 @@ func ScrapeProduct(browserCtx context.Context,
 	}
 	clothingItem.ImageUrl = imageURL
 
-	var hexColors []string
-	doc.Find(".product-detail-color-selector__color-area").Each(func(i int, s *goquery.Selection) {
+	hexColors := make([]string, 0)
+	colorElements := doc.Find(".product-detail-color-selector__color-area")
+	if colorElements.Length() == 0 {
+		log.Warn().Str("product", clothingItem.Name).Str("url", url).Msg("No colour selectors found for product on page")
+	}
+
+	colorElements.Each(func(i int, s *goquery.Selection) {
 		colourStyle, colourExists := s.Attr("style")
 		if colourExists {
-			rgb, rgbExists := helpers.ExtractRGBFromStyle(colourStyle)
-			if rgbExists {
-				hexColor := helpers.RgbToHex(rgb)
-				hexColors = append(hexColors, hexColor)
+			hex, hexExists := helpers.ExtractHexFromStyle(colourStyle)
+			if hexExists {
+				hexColors = append(hexColors, hex)
+			} else {
+				log.Warn().Str("style", colourStyle).Str("url", url).Msg("No hex colour found from style for product")
 			}
 		} else {
 			log.Warn().Str("url", url).Msg("No colours found for product")

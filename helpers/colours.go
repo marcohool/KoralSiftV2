@@ -6,13 +6,8 @@ import (
 	"strconv"
 )
 
-func ExtractRGBFromStyle(style string) (string, bool) {
-	reRGB := regexp.MustCompile(`rgb\((\d+),\s*(\d+),\s*(\d+)\)`)
+func ExtractHexFromStyle(style string) (string, bool) {
 	reHex := regexp.MustCompile(`#([0-9A-Fa-f]{6})`)
-
-	if match := reRGB.FindString(style); match != "" {
-		return match, true
-	}
 
 	if match := reHex.FindString(style); match != "" {
 		return match, true
