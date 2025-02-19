@@ -5,6 +5,7 @@ import (
 	"KoralSiftV2/models"
 	"fmt"
 	"github.com/rs/zerolog/log"
+	"strings"
 )
 
 var MensCategoryIds = []int{
@@ -43,6 +44,14 @@ func ScrapeAsos() {
 	}
 
 	log.Info().Int("total_products", len(ukMenUKProducts)).Msg("Total products scraped")
+
+	cleanedClothingItems := CleanData(ukMenUKProducts)
+
+	log.Info().Int("total_cleaned_products", len(cleanedClothingItems)).Msg("Total cleaned products")
+
+	for _, product := range cleanedClothingItems {
+		log.Info().Interface("product", product).Msg("Cleaned product")
+	}
 }
 
 func GetCategoryProducts(categoryId int, gender string, country string, currencyCode string) []models.ClothingItem {
@@ -93,10 +102,50 @@ func FormatProductsEndpoint(categoryId int, offset int, country string, currency
 	)
 }
 
-/*
-CleansData does the following
-*/
-func CleanData() {
+// CleanData Removes duplicates and merges color variations
+func CleanData(clothingItems []models.ClothingItem) []models.ClothingItem {
 	log.Info().Msg("Cleaning ASOS data")
 
+	// Step 1: Remove exact duplicates based on SourceUrl
+	uniqueProducts := make(map[string]models.ClothingItem)
+	for _, product := range clothingItems {
+		if _, exists := uniqueProducts[product.SourceUrl]; !exists {
+			uniqueProducts[product.SourceUrl] = product
+		}
+	}
+
+	// Step 2: Remove color variations from product name
+	for _, product := range uniqueProducts {
+		baseName := ExtractColourFromName(product.Name)
+		product.Name = baseName
+
+		uniqueProducts[product.SourceUrl] = product
+	}
+
+	// Step 3: Merge products with different colors but same base name
+	nameMap := make(map[string]*models.ClothingItem)
+	for _, product := range uniqueProducts {
+		if existingProduct, found := nameMap[product.Name]; found {
+			if !helpers.Contains(existingProduct.Colours, product.Colours[0]) {
+				existingProduct.Colours = append(existingProduct.Colours, product.Colours[0])
+			}
+		} else {
+			nameMap[product.Name] = &product
+		}
+	}
+
+	cleanedProducts := make([]models.ClothingItem, 0, len(nameMap))
+	for _, product := range nameMap {
+		cleanedProducts = append(cleanedProducts, *product)
+	}
+
+	return cleanedProducts
+}
+
+func ExtractColourFromName(name string) string {
+	parts := strings.Split(name, " in ")
+	if len(parts) == 2 {
+		return parts[0]
+	}
+	return name
 }

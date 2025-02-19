@@ -9,3 +9,12 @@ func CreateSliceFromMap(set map[string]struct{}) []string {
 
 	return slice
 }
+
+func Contains(slice []string, value string) bool {
+	for _, v := range slice {
+		if v == value {
+			return true
+		}
+	}
+	return false
+}
