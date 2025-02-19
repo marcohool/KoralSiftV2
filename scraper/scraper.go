@@ -8,5 +8,6 @@ import (
 func RunScraper() {
 	log.Info().Msg("Running scrapers")
 
-	stores.ScrapeZara()
+	//stores.ScrapeZara()
+	stores.ScrapeAsos()
 }
