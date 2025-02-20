@@ -52,6 +52,12 @@ func ScrapeAsos() {
 	for _, product := range cleanedClothingItems {
 		log.Info().Interface("product", product).Msg("Cleaned product")
 	}
+
+	err := helpers.SaveSliceToJSONFile(cleanedClothingItems, "asos")
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to save ASOS data")
+	}
+
 }
 
 func GetCategoryProducts(categoryId int, gender string, country string, currencyCode string) []models.ClothingItem {
