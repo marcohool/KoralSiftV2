@@ -1,6 +1,7 @@
 ﻿package helpers
 
 import (
+	"KoralSiftV2/models"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -29,4 +30,21 @@ func RgbToHex(rgb string) string {
 	b, _ := strconv.Atoi(matches[2])
 
 	return fmt.Sprintf("#%02X%02X%02X", r, g, b)
+}
+
+// MergeColours merges two slices of Colour structs.
+// If all fields (Name, Hex, or ImageUrl) match, the structs are merged.
+func MergeColours(slice1, slice2 []models.Colour) []models.Colour {
+	merged := make([]models.Colour, 0)
+	seen := make(map[string]models.Colour)
+
+	for _, colour := range append(slice1, slice2...) {
+		key := colour.Name + "|" + colour.Hex + "|" + colour.ImageUrl
+
+		if existing, exists := seen[key]; !exists {
+			seen[key] = existing
+		}
+	}
+
+	return merged
 }

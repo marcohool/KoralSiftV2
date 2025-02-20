@@ -19,7 +19,7 @@ func ScrapeZara() {
 	browserCtx, cancel := browser.NewChromeManager()
 	defer cancel()
 
-	ukMenHrefs := ScrapeAllProductsPage(browserCtx, "https://www.zara.com/uk/en/man-all-products-l7465.html?v1=2443335")
+	ukMenHrefs := ScrapeZaraAllProductsPage(browserCtx, "https://www.zara.com/uk/en/man-all-products-l7465.html?v1=2443335")
 
 	for _, href := range ukMenHrefs {
 		log.Debug().Str("href", href).Msg("Found product href")
@@ -109,7 +109,7 @@ func ScrapeProduct(browserCtx context.Context,
 	}
 	clothingItem.ImageUrl = imageURL
 
-	hexColors := make([]string, 0)
+	hexColors := make([]models.Colour, 0)
 	colorElements := doc.Find(".product-detail-color-selector__color-area")
 	if colorElements.Length() == 0 {
 		log.Debug().Str("product", clothingItem.Name).Str("url", url).Msg("No colour selectors found for product on page")
@@ -119,8 +119,9 @@ func ScrapeProduct(browserCtx context.Context,
 		colourStyle, colourExists := s.Attr("style")
 		if colourExists {
 			hex, hexExists := helpers.ExtractHexFromStyle(colourStyle)
+
 			if hexExists {
-				hexColors = append(hexColors, hex)
+				hexColors = append(hexColors, models.Colour{Hex: hex})
 			} else {
 				log.Warn().Str("style", colourStyle).Str("url", url).Msg("No hex colour found from style for product")
 			}
@@ -133,7 +134,7 @@ func ScrapeProduct(browserCtx context.Context,
 	return clothingItem
 }
 
-func ScrapeAllProductsPage(browserCtx context.Context, baseUrl string) []string {
+func ScrapeZaraAllProductsPage(browserCtx context.Context, baseUrl string) []string {
 	log.Info().Str("url", baseUrl).Msg("Scraping Zara products page")
 
 	page := 1
@@ -159,7 +160,7 @@ func ScrapeAllProductsPage(browserCtx context.Context, baseUrl string) []string 
 		page++
 	}
 
-	uniqueHrefs := helpers.CreateSliceFromMap(hrefsMap)
+	uniqueHrefs := helpers.CreateSliceFromMapKey(hrefsMap)
 
 	log.Info().Int("unique_count", len(uniqueHrefs)).Msg("Total unique product hrefs found")
 

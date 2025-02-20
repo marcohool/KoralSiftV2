@@ -75,7 +75,7 @@ func GetCategoryProducts(categoryId int, gender string, country string, currency
 			clothingItems = append(clothingItems, models.ClothingItem{
 				Name:         product.Name,
 				Brand:        "ASOS",
-				Colours:      []string{product.Colour},
+				Colours:      []models.Colour{{Name: product.Colour}},
 				Price:        product.Price.Current.Value,
 				CurrencyCode: currencyCode,
 				Gender:       gender,
@@ -126,14 +126,13 @@ func CleanData(clothingItems []models.ClothingItem) []models.ClothingItem {
 	nameMap := make(map[string]*models.ClothingItem)
 	for _, product := range uniqueProducts {
 		if existingProduct, found := nameMap[product.Name]; found {
-			if !helpers.Contains(existingProduct.Colours, product.Colours[0]) {
-				existingProduct.Colours = append(existingProduct.Colours, product.Colours[0])
-			}
+			existingProduct.Colours = helpers.MergeColours(existingProduct.Colours, product.Colours)
 		} else {
 			nameMap[product.Name] = &product
 		}
 	}
 
+	// Step 4: Convert map back to slice
 	cleanedProducts := make([]models.ClothingItem, 0, len(nameMap))
 	for _, product := range nameMap {
 		cleanedProducts = append(cleanedProducts, *product)
