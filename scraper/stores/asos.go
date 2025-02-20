@@ -45,7 +45,7 @@ func ScrapeAsos() {
 
 	log.Info().Int("total_products", len(ukMenUKProducts)).Msg("Total products scraped")
 
-	cleanedClothingItems := CleanData(ukMenUKProducts)
+	cleanedClothingItems := CleanASOSData(ukMenUKProducts)
 
 	log.Info().Int("total_cleaned_products", len(cleanedClothingItems)).Msg("Total cleaned products")
 
@@ -75,7 +75,7 @@ func GetCategoryProducts(categoryId int, gender string, country string, currency
 			clothingItems = append(clothingItems, models.ClothingItem{
 				Name:         product.Name,
 				Brand:        "ASOS",
-				Colours:      []models.Colour{{Name: product.Colour}},
+				Colours:      []models.Colour{{Name: product.Colour, ImageUrl: product.ImageURL}},
 				Price:        product.Price.Current.Value,
 				CurrencyCode: currencyCode,
 				Gender:       gender,
@@ -102,29 +102,25 @@ func FormatProductsEndpoint(categoryId int, offset int, country string, currency
 	)
 }
 
-// CleanData Removes duplicates and merges color variations
-func CleanData(clothingItems []models.ClothingItem) []models.ClothingItem {
+// CleanASOSData Removes duplicates and merges color variations
+func CleanASOSData(clothingItems []models.ClothingItem) []models.ClothingItem {
 	log.Info().Msg("Cleaning ASOS data")
 
 	// Step 1: Remove exact duplicates based on SourceUrl
-	uniqueProducts := make(map[string]models.ClothingItem)
-	for _, product := range clothingItems {
-		if _, exists := uniqueProducts[product.SourceUrl]; !exists {
-			uniqueProducts[product.SourceUrl] = product
-		}
-	}
+	uniqueProductsBySourceUrl := helpers.MergeDuplicatesBySourceUrl(clothingItems)
 
 	// Step 2: Remove color variations from product name
-	for _, product := range uniqueProducts {
-		baseName := ExtractColourFromName(product.Name)
+	uniqueProductsByName := make(map[string]models.ClothingItem)
+	for _, product := range uniqueProductsBySourceUrl {
+		baseName := RemoveColourFromName(product.Name)
 		product.Name = baseName
 
-		uniqueProducts[product.SourceUrl] = product
+		uniqueProductsByName[product.SourceUrl] = product
 	}
 
 	// Step 3: Merge products with different colors but same base name
 	nameMap := make(map[string]*models.ClothingItem)
-	for _, product := range uniqueProducts {
+	for _, product := range uniqueProductsByName {
 		if existingProduct, found := nameMap[product.Name]; found {
 			existingProduct.Colours = helpers.MergeColours(existingProduct.Colours, product.Colours)
 		} else {
@@ -141,7 +137,7 @@ func CleanData(clothingItems []models.ClothingItem) []models.ClothingItem {
 	return cleanedProducts
 }
 
-func ExtractColourFromName(name string) string {
+func RemoveColourFromName(name string) string {
 	parts := strings.Split(name, " in ")
 	if len(parts) == 2 {
 		return parts[0]
