@@ -45,15 +45,16 @@ func ScrapeAsos() {
 
 	log.Info().Int("total_products", len(ukMenUKProducts)).Msg("Total products scraped")
 
+	err := helpers.SaveSliceToJSONFile(ukMenUKProducts, "asos-dirty")
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to save ASOS data")
+	}
+
 	cleanedClothingItems := CleanASOSData(ukMenUKProducts)
 
 	log.Info().Int("total_cleaned_products", len(cleanedClothingItems)).Msg("Total cleaned products")
 
-	for _, product := range cleanedClothingItems {
-		log.Info().Interface("product", product).Msg("Cleaned product")
-	}
-
-	err := helpers.SaveSliceToJSONFile(cleanedClothingItems, "asos")
+	err = helpers.SaveSliceToJSONFile(cleanedClothingItems, "asos")
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to save ASOS data")
 	}
@@ -144,7 +145,7 @@ func CleanASOSData(clothingItems []models.ClothingItem) []models.ClothingItem {
 }
 
 func RemoveColourFromName(name string) string {
-	parts := strings.Split(name, " in ")
+	parts := strings.Split(strings.ToLower(name), " in ")
 	if len(parts) == 2 {
 		return parts[0]
 	}

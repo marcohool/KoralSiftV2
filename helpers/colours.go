@@ -42,6 +42,7 @@ func MergeColours(slice1, slice2 []models.Colour) []models.Colour {
 		key := colour.Name + "|" + colour.Hex + "|" + colour.ImageUrl
 
 		if existing, exists := seen[key]; !exists {
+			merged = append(merged, colour)
 			seen[key] = existing
 		}
 	}
