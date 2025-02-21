@@ -28,8 +28,9 @@ func ScrapeZara() {
 
 	ukMensProducts := ScrapeProductHrefs(browserCtx, ukMenHrefs, enums.Male, enums.GBP, enums.UK)
 
-	for _, product := range ukMensProducts {
-		log.Info().Interface("product", product).Msg("Scraped product")
+	err := helpers.SaveSliceToJSONFile(ukMensProducts, "asos")
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to save ASOS data")
 	}
 }
 
@@ -47,7 +48,7 @@ func ScrapeProductHrefs(browserCtx context.Context,
 		tabCancel()
 
 		if clothingItem != nil {
-			clothingItem.Brand = "Zara"
+			clothingItem.Brand = enums.Zara
 			clothingItem.CurrencyCode = currencyCode
 			clothingItem.Gender = gender
 			clothingItem.SourceUrl = href
