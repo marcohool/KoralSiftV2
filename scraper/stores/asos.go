@@ -37,7 +37,7 @@ func ScrapeAsos() {
 	var ukMenUKProducts []models.ClothingItem
 
 	for _, categoryId := range MensCategoryIds {
-		ukMenUKProducts = append(ukMenUKProducts, GetCategoryProducts(categoryId, "Male", "GB", "GBP")...)
+		ukMenUKProducts = append(ukMenUKProducts, GetCategoryProducts(categoryId, enums.Male, enums.UK, enums.GBP)...)
 	}
 
 	for _, product := range ukMenUKProducts {
@@ -90,34 +90,27 @@ func GetCategoryProducts(categoryId int, gender enums.Gender, country enums.Sour
 		}
 
 		for _, product := range data.Products {
-			clothingItems = append(clothingItems, models.ClothingItem{
-				Name:         product.Name,
-				Brand:        "ASOS",
-				Colours:      []models.Colour{{Name: product.Colour, ImageUrl: product.ImageURL}},
-				Price:        product.Price.Current.Value,
-				CurrencyCode: currencyCode,
-				Gender:       gender,
-				ImageUrl:     "https://" + product.ImageURL,
-				SourceUrl:    "https://www.asos.com/" + product.URL,
-				SourceRegion: country,
-			})
+			var sourceUrl = fmt.Sprintf("https://www.asos.com/%s", product.URL)
+			var imageUrl = fmt.Sprintf("https://%s", product.ImageURL)
+
+			clothingItems = append(clothingItems, models.NewClothingItem(
+				product.Name,
+				"",
+				enums.ASOS,
+				[]models.Colour{models.NewColour(product.Colour, "", product.ImageURL, sourceUrl)},
+				product.Price.Current.Value,
+				currencyCode,
+				gender,
+				imageUrl,
+				sourceUrl,
+				country,
+			))
 		}
 
-		offset += 200
+		offset += limit
 	}
 
 	return clothingItems
-}
-
-func FormatProductsEndpoint(categoryId int, offset int, country string, currencyCode string) string {
-	return fmt.Sprintf(
-		"https://www.asos.com/api/product/search/v2/categories/%d?offset=%d&includeNonPurchasableTypes=restocking&store=COM&lang=en-GB&currency=%s&channel=desktop-web&country=%s&limit=%d&excludeFacets=true",
-		categoryId,
-		offset,
-		currencyCode,
-		country,
-		200,
-	)
 }
 
 // CleanASOSData Removes duplicates and merges color variations

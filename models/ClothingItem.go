@@ -5,6 +5,7 @@ import "KoralSiftV2/models/enums"
 type ClothingItem struct {
 	Name         string             `json:"name"`
 	Description  string             `json:"description"`
+	Metadata     string             `json:"metadata"`
 	Brand        enums.Brand        `json:"brand"`
 	Category     string             `json:"category"`
 	Colours      []Colour           `json:"colours"`
@@ -34,7 +35,7 @@ func NewColour(name, hex, imageUrl, sourceUrl string) Colour {
 
 func NewClothingItem(
 	name string,
-	description string,
+	metadata string,
 	brand enums.Brand,
 	colours []Colour,
 	price float64,
@@ -45,7 +46,7 @@ func NewClothingItem(
 	sourceRegion enums.SourceRegion) ClothingItem {
 	return ClothingItem{
 		Name:         name,
-		Description:  description,
+		Metadata:     metadata,
 		Brand:        brand,
 		Colours:      colours,
 		Price:        price,
