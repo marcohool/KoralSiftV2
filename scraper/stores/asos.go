@@ -69,13 +69,17 @@ func GetCategoryProducts(categoryId int, gender enums.Gender, country enums.Sour
 	var offset = 0
 	var limit = 200
 
+	var countryMap = map[enums.SourceRegion]string{
+		enums.UK: "GB",
+	}
+
 	for {
 		var productsEndpoint = fmt.Sprintf(
 			"https://www.asos.com/api/product/search/v2/categories/%d?offset=%d&includeNonPurchasableTypes=restocking&store=COM&lang=en-GB&currency=%s&channel=desktop-web&country=%s&limit=%d&excludeFacets=true",
 			categoryId,
 			offset,
 			currencyCode,
-			country,
+			countryMap[country],
 			limit,
 		)
 
