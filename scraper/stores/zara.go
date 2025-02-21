@@ -4,6 +4,7 @@ import (
 	"KoralSiftV2/browser"
 	"KoralSiftV2/helpers"
 	"KoralSiftV2/models"
+	"KoralSiftV2/models/enums"
 	"context"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
@@ -25,7 +26,7 @@ func ScrapeZara() {
 		log.Debug().Str("href", href).Msg("Found product href")
 	}
 
-	ukMensProducts := ScrapeProductHrefs(browserCtx, ukMenHrefs, "Male", "GBP", "UK")
+	ukMensProducts := ScrapeProductHrefs(browserCtx, ukMenHrefs, enums.Male, enums.GBP, enums.UK)
 
 	for _, product := range ukMensProducts {
 		log.Info().Interface("product", product).Msg("Scraped product")
@@ -34,9 +35,9 @@ func ScrapeZara() {
 
 func ScrapeProductHrefs(browserCtx context.Context,
 	hrefs []string,
-	gender string,
-	currencyCode string,
-	sourceRegion string) []*models.ClothingItem {
+	gender enums.Gender,
+	currencyCode enums.CurrencyCode,
+	sourceRegion enums.SourceRegion) []*models.ClothingItem {
 	log.Debug().Int("count", len(hrefs)).Msg("Scraping Zara product hrefs")
 	var allProducts []*models.ClothingItem
 

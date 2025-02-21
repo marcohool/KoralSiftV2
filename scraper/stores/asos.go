@@ -3,6 +3,7 @@
 import (
 	"KoralSiftV2/helpers"
 	"KoralSiftV2/models"
+	"KoralSiftV2/models/enums"
 	"fmt"
 	"github.com/rs/zerolog/log"
 	"strings"
@@ -61,14 +62,24 @@ func ScrapeAsos() {
 
 }
 
-func GetCategoryProducts(categoryId int, gender string, country string, currencyCode string) []models.ClothingItem {
+func GetCategoryProducts(categoryId int, gender enums.Gender, country enums.SourceRegion, currencyCode enums.CurrencyCode) []models.ClothingItem {
 	var data models.AsosResponse
 	var clothingItems []models.ClothingItem
 
 	var offset = 0
+	var limit = 200
 
 	for {
-		err := helpers.FetchData(FormatProductsEndpoint(categoryId, offset, country, currencyCode), &data)
+		var productsEndpoint = fmt.Sprintf(
+			"https://www.asos.com/api/product/search/v2/categories/%d?offset=%d&includeNonPurchasableTypes=restocking&store=COM&lang=en-GB&currency=%s&channel=desktop-web&country=%s&limit=%d&excludeFacets=true",
+			categoryId,
+			offset,
+			currencyCode,
+			country,
+			limit,
+		)
+
+		err := helpers.FetchData(productsEndpoint, &data)
 		if err != nil {
 			log.Error().Err(err).Msg("Failed to fetch data")
 			return nil
