@@ -1,13 +1,13 @@
 ﻿package enums
 
-type Brand string
+type Store string
 
 const (
-	Zara    Brand = "Zara"
-	ASOS    Brand = "ASOS"
-	Next    Brand = "Next"
-	Topshop Brand = "Topshop"
-	Boohoo  Brand = "Boohoo"
-	HM      Brand = "H&M"
-	NewLook Brand = "New Look"
+	Zara    Store = "Zara"
+	ASOS    Store = "ASOS"
+	Next    Store = "Next"
+	Topshop Store = "Topshop"
+	Boohoo  Store = "Boohoo"
+	HM      Store = "H&M"
+	NewLook Store = "New Look"
 )

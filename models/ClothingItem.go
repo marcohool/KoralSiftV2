@@ -4,56 +4,49 @@ import "KoralSiftV2/models/enums"
 
 type ClothingItem struct {
 	Name         string             `json:"name"`
-	Description  string             `json:"description"`
-	Metadata     string             `json:"metadata"`
-	Brand        enums.Brand        `json:"brand"`
-	Category     string             `json:"category"`
-	Colours      []Colour           `json:"colours"`
+	Metadata     map[string]string  `json:"metadata"`
+	Store        enums.Store        `json:"store"`
 	Price        float64            `json:"price"`
+	Variants     []ColourVariant    `json:"variants"`
 	CurrencyCode enums.CurrencyCode `json:"currencyCode"`
 	Gender       enums.Gender       `json:"gender"`
-	ImageUrl     string             `json:"imageUrl"`
-	SourceUrl    string             `json:"sourceUrl"`
 	SourceRegion enums.SourceRegion `json:"sourceRegion"`
 }
 
-type Colour struct {
-	Name      string `json:"name"`
-	Hex       string `json:"hex"`
-	ImageUrl  string `json:"imageUrl"`
-	SourceUrl string `json:"sourceUrl"`
-}
-
-func NewColour(name, hex, imageUrl, sourceUrl string) Colour {
-	return Colour{
-		Name:      name,
-		Hex:       hex,
-		ImageUrl:  imageUrl,
-		SourceUrl: sourceUrl,
-	}
+type ColourVariant struct {
+	Color     string `json:"color"`
+	ImageURL  string `json:"image_url"`
+	SourceURL string `json:"source_url"`
 }
 
 func NewClothingItem(
 	name string,
-	metadata string,
-	brand enums.Brand,
-	colours []Colour,
+	metadata map[string]string,
+	store enums.Store,
 	price float64,
+	variants []ColourVariant,
 	currencyCode enums.CurrencyCode,
 	gender enums.Gender,
-	imageUrl string,
-	sourceUrl string,
 	sourceRegion enums.SourceRegion) ClothingItem {
 	return ClothingItem{
 		Name:         name,
 		Metadata:     metadata,
-		Brand:        brand,
-		Colours:      colours,
+		Store:        store,
 		Price:        price,
+		Variants:     variants,
 		CurrencyCode: currencyCode,
 		Gender:       gender,
-		ImageUrl:     imageUrl,
-		SourceUrl:    sourceUrl,
 		SourceRegion: sourceRegion,
+	}
+}
+
+func NewColourVariant(
+	color string,
+	imageURL string,
+	sourceURL string) ColourVariant {
+	return ColourVariant{
+		Color:     color,
+		ImageURL:  imageURL,
+		SourceURL: sourceURL,
 	}
 }
