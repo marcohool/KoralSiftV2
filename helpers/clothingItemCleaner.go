@@ -1,4 +1,4 @@
-﻿package helpers
+package helpers
 
 import "KoralSiftV2/models"
 
@@ -7,7 +7,10 @@ func MergeDuplicatesBySourceUrl(clothingItems []models.ClothingItem) []models.Cl
 
 	for _, product := range clothingItems {
 		if _, exists := uniqueProducts[product.SourceUrl]; exists {
-			mergedColours := MergeColours(uniqueProducts[product.SourceUrl].Colours, product.Colours)
+			mergedColours := MergeColours(
+				uniqueProducts[product.SourceUrl].Colours,
+				product.Colours,
+			)
 
 			product.Colours = mergedColours
 			uniqueProducts[product.SourceUrl] = product

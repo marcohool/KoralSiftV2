@@ -1,4 +1,4 @@
-﻿package helpers
+package helpers
 
 func CreateSliceFromMapKey(set map[string]struct{}) []string {
 	slice := make([]string, 0, len(set))

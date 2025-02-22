@@ -1,4 +1,4 @@
-﻿package models
+package models
 
 type AsosResponse struct {
 	SearchTerm   string    `json:"searchTerm"`

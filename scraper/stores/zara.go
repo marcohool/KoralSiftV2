@@ -1,4 +1,4 @@
-﻿package stores
+package stores
 
 import (
 	"KoralSiftV2/browser"
@@ -20,7 +20,10 @@ func ScrapeZara() {
 	browserCtx, cancel := browser.NewChromeManager()
 	defer cancel()
 
-	ukMenHrefs := ScrapeZaraAllProductsPage(browserCtx, "https://www.zara.com/uk/en/man-all-products-l7465.html?v1=2443335")
+	ukMenHrefs := ScrapeZaraAllProductsPage(
+		browserCtx,
+		"https://www.zara.com/uk/en/man-all-products-l7465.html?v1=2443335",
+	)
 
 	for _, href := range ukMenHrefs {
 		log.Debug().Str("href", href).Msg("Found product href")
@@ -105,7 +108,8 @@ func ScrapeProduct(browserCtx context.Context,
 	}
 	clothingItem.Price = price
 
-	imageURL, imgExists := doc.Find("[class^='product-detail-view'] [class$='-image'] img").Attr("src")
+	imageURL, imgExists := doc.Find("[class^='product-detail-view'] [class$='-image'] img").
+		Attr("src")
 	if !imgExists {
 		log.Warn().Str("url", url).Msg("No image found for product")
 	}
@@ -114,7 +118,10 @@ func ScrapeProduct(browserCtx context.Context,
 	hexColors := make([]models.Colour, 0)
 	colorElements := doc.Find(".product-detail-color-selector__color-area")
 	if colorElements.Length() == 0 {
-		log.Debug().Str("product", clothingItem.Name).Str("url", url).Msg("No colour selectors found for product on page")
+		log.Debug().
+			Str("product", clothingItem.Name).
+			Str("url", url).
+			Msg("No colour selectors found for product on page")
 	}
 
 	colorElements.Each(func(i int, s *goquery.Selection) {

@@ -1,4 +1,4 @@
-﻿package stores
+package stores
 
 import (
 	"KoralSiftV2/helpers"
@@ -37,7 +37,9 @@ func ScrapeAsos() {
 	var ukMenUKProducts []models.ClothingItem
 
 	for _, categoryId := range MensCategoryIds {
-		ukMenUKProducts = append(ukMenUKProducts, GetCategoryProducts(categoryId, enums.Male, enums.UK, enums.GBP)...)
+		ukMenUKProducts = append(
+			ukMenUKProducts,
+			GetCategoryProducts(categoryId, enums.Male, enums.UK, enums.GBP)...)
 	}
 
 	for _, product := range ukMenUKProducts {
@@ -53,7 +55,9 @@ func ScrapeAsos() {
 
 	cleanedClothingItems := CleanASOSData(ukMenUKProducts)
 
-	log.Info().Int("total_cleaned_products", len(cleanedClothingItems)).Msg("Total cleaned products")
+	log.Info().
+		Int("total_cleaned_products", len(cleanedClothingItems)).
+		Msg("Total cleaned products")
 
 	err = helpers.SaveSliceToJSONFile(cleanedClothingItems, "asos")
 	if err != nil {
@@ -62,7 +66,12 @@ func ScrapeAsos() {
 
 }
 
-func GetCategoryProducts(categoryId int, gender enums.Gender, country enums.SourceRegion, currencyCode enums.CurrencyCode) []models.ClothingItem {
+func GetCategoryProducts(
+	categoryId int,
+	gender enums.Gender,
+	country enums.SourceRegion,
+	currencyCode enums.CurrencyCode,
+) []models.ClothingItem {
 	var data models.AsosResponse
 	var clothingItems []models.ClothingItem
 

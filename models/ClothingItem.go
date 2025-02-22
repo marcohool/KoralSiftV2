@@ -1,4 +1,4 @@
-﻿package models
+package models
 
 import "KoralSiftV2/models/enums"
 
@@ -27,7 +27,8 @@ func NewClothingItem(
 	variants []ColourVariant,
 	currencyCode enums.CurrencyCode,
 	gender enums.Gender,
-	sourceRegion enums.SourceRegion) ClothingItem {
+	sourceRegion enums.SourceRegion,
+) ClothingItem {
 	return ClothingItem{
 		Name:         name,
 		Metadata:     metadata,
