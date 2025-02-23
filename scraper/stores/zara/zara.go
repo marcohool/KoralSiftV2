@@ -25,9 +25,6 @@ func ScrapeZara() {
 		browserCtx,
 		"https://www.zara.com/uk/en/man-all-products-l7465.html?v1=2443335",
 	)
-	//ukMenHrefs := []string{
-	//	"https://www.zara.com/uk/en/cotton-wool-blend-button-up-sweater-p02632403.html",
-	//}
 
 	ukMensProducts := ScrapeProductHrefs(browserCtx, ukMenHrefs, enums.Male, enums.GBP, enums.UK)
 
