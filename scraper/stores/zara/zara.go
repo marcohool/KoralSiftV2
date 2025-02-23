@@ -21,9 +21,11 @@ func ScrapeZara() {
 	browserCtx, cancel := browser.NewChromeManager()
 	defer cancel()
 
-	ukMenHrefs := ScrapeZaraAllProductsPage(
+	ukMenHrefs := helpers.ScrapeAllProductsPage(
 		browserCtx,
 		"https://www.zara.com/uk/en/man-all-products-l7465.html?v1=2443335",
+		"li.product-grid-product a.product-link",
+		formatProductPageUrl,
 	)
 
 	ukMensProducts := ScrapeProductHrefs(browserCtx, ukMenHrefs, enums.Male, enums.GBP, enums.UK)
@@ -151,66 +153,6 @@ func ScrapeProduct(browserCtx context.Context,
 	return &clothingItem
 }
 
-func GetProductsFromPage(browserCtx context.Context, baseURL string, pageNo int) []string {
-	url := fmt.Sprintf("%s&page=%d", baseURL, pageNo)
-	log.Debug().Int("page", pageNo).Str("url", url).Msg("Scraping Zara product page")
-
-	ctx, cancel := context.WithTimeout(browserCtx, 20*time.Second)
-	defer cancel()
-
-	err, html := browser.ScrapePage(ctx, url)
-	if err != nil {
-		log.Error().Err(err).Str("url", url).Msg("Error navigating page")
-		return nil
-	}
-
-	doc, err := goquery.NewDocumentFromReader(strings.NewReader(html))
-	if err != nil {
-		log.Error().Err(err).Str("url", url).Msg("Error parsing HTML")
-		return nil
-	}
-
-	var productHrefs []string
-
-	doc.Find("li.product-grid-product a.product-link").Each(func(i int, s *goquery.Selection) {
-		href, exists := s.Attr("href")
-		if exists {
-			productHrefs = append(productHrefs, href)
-		}
-	})
-
-	return productHrefs
-}
-
-func ScrapeZaraAllProductsPage(browserCtx context.Context, baseUrl string) []string {
-	log.Info().Str("url", baseUrl).Msg("Scraping Zara products page")
-
-	page := 1
-
-	hrefsMap := make(map[string]struct{})
-
-	for {
-		tabCtx, tabCancel := chromedp.NewContext(browserCtx)
-		hrefs := GetProductsFromPage(tabCtx, baseUrl, page)
-		tabCancel()
-
-		if len(hrefs) == 0 {
-			log.Info().Int("page", page).Msg("No more products found")
-			break
-		}
-
-		log.Info().Int("page", page).Int("count", len(hrefs)).Msg("Found products on page")
-
-		for _, href := range hrefs {
-			hrefsMap[href] = struct{}{}
-		}
-
-		page++
-	}
-
-	uniqueHrefs := helpers.CreateSliceFromMapKey(hrefsMap)
-
-	log.Info().Int("unique_count", len(uniqueHrefs)).Msg("Total unique product hrefs found")
-
-	return uniqueHrefs
+func formatProductPageUrl(baseUrl string, page int) string {
+	return fmt.Sprintf("%s&page=%d", baseUrl, page)
 }

@@ -1,7 +1,6 @@
 package scraper
 
 import (
-	"KoralSiftV2/scraper/stores/asos"
 	"KoralSiftV2/scraper/stores/zara"
 	"github.com/rs/zerolog/log"
 )
@@ -9,6 +8,7 @@ import (
 func RunScraper() {
 	log.Info().Msg("Running scrapers")
 
+	//selfridges.ScrapeSelfridges()
 	zara.ScrapeZara()
-	asos.ScrapeAsos()
+	//asos.ScrapeAsos()
 }
