@@ -1,51 +1,50 @@
 package helpers
 
 import (
-	"KoralSiftV2/models"
 	"fmt"
 	"regexp"
 	"strconv"
+	"strings"
 )
 
-func ExtractHexFromStyle(style string) (string, bool) {
-	reHex := regexp.MustCompile(`#([0-9A-Fa-f]{6})`)
+/*
+ExtractColourFromStyle extracts a colour from a CSS style attribute.
+It supports both hex and rgb colours, and returns the hex value.
+*/
+func ExtractColourFromStyle(style string) (string, bool) {
+	hexRegex := regexp.MustCompile(`#([0-9a-fA-F]{6})`)
+	rgbRegex := regexp.MustCompile(`rgb\((\d+),\s*(\d+),\s*(\d+)\)`)
 
-	if match := reHex.FindString(style); match != "" {
-		return match, true
+	if hexMatch := hexRegex.FindString(style); hexMatch != "" {
+		return strings.ToLower(hexMatch), true
+	}
+
+	if rgbMatch := rgbRegex.FindStringSubmatch(style); len(rgbMatch) == 4 {
+		r, _ := strconv.Atoi(rgbMatch[1])
+		g, _ := strconv.Atoi(rgbMatch[2])
+		b, _ := strconv.Atoi(rgbMatch[3])
+
+		hexColor := fmt.Sprintf("#%02x%02x%02x", r, g, b)
+		return hexColor, true
 	}
 
 	return "", false
 }
 
-func RgbToHex(rgb string) string {
-	re := regexp.MustCompile(`\d+`)
-	matches := re.FindAllString(rgb, -1)
-
-	if len(matches) != 3 {
-		return ""
-	}
-
-	r, _ := strconv.Atoi(matches[0])
-	g, _ := strconv.Atoi(matches[1])
-	b, _ := strconv.Atoi(matches[2])
-
-	return fmt.Sprintf("#%02X%02X%02X", r, g, b)
-}
-
-// MergeColours merges two slices of Colour structs.
-// If all fields (Name, Hex, or ImageUrl) match, the structs are merged.
-func MergeColours(slice1, slice2 []models.Colour) []models.Colour {
-	merged := make([]models.Colour, 0)
-	seen := make(map[string]models.Colour)
-
-	for _, colour := range append(slice1, slice2...) {
-		key := colour.Name + "|" + colour.Hex + "|" + colour.ImageUrl
-
-		if existing, exists := seen[key]; !exists {
-			merged = append(merged, colour)
-			seen[key] = existing
-		}
-	}
-
-	return merged
-}
+//// MergeColours merges two slices of Colour structs.
+//// If all fields (Name, Hex, or ImageUrl) match, the structs are merged.
+//func MergeColours(slice1, slice2 []models.Colour) []models.Colour {
+//	merged := make([]models.Colour, 0)
+//	seen := make(map[string]models.Colour)
+//
+//	for _, colour := range append(slice1, slice2...) {
+//		key := colour.Name + "|" + colour.Hex + "|" + colour.ImageUrl
+//
+//		if existing, exists := seen[key]; !exists {
+//			merged = append(merged, colour)
+//			seen[key] = existing
+//		}
+//	}
+//
+//	return merged
+//}
